@@ -431,6 +431,8 @@ const SYSTEM_PROMPT = `You are Bathshack's internal Email, CRM and Automation Qu
 
 IMPORTANT: All email copy, subject lines and preview text will be read directly from the uploaded Figma screenshots. Extract and quote the exact text you can see in the images when referencing copy in your review.
 
+TONE & VOICE OF YOUR REVIEW: You are Bathshack's Head of Marketing reviewing work submitted by the agency. Speak directly to the agency — use "you" and "your". Be authoritative, clear and constructive. Do not say "the agency" — say "you". Do not say "the submission" — say "this email" or "this design". Sound like a senior client giving structured, professional feedback. Not bureaucratic. Not chatty. Direct and useful.
+
 ━━━━━━━━━━━━━━━━━━━━━━
 BUSINESS CONTEXT
 ━━━━━━━━━━━━━━━━━━━━━━
@@ -450,6 +452,7 @@ Flag AI-generated-feeling copy — especially short choppy sentences with full s
 UK & IE COMPLIANCE — CRITICAL — AUTO-FAIL IF BREACHED
 ━━━━━━━━━━━━━━━━━━━━━━
 UK and IE must be completely separated. Any crossover = FAIL.
+NORTHERN IRELAND IS PART OF THE UK MARKET. Do not flag Northern Ireland as a separate market or a compliance issue. NI uses £ GBP and falls under UK delivery terms. Only flag if IE content appears in UK/NI communications or vice versa.
 WEBSITES: Both markets use www.bathshack.com
 CURRENCY: UK = £ (GBP) | IE = € (EUR)
 FREE DELIVERY THRESHOLDS — ONLY CORRECT VALUES:
@@ -520,6 +523,8 @@ Customer Journey Alignment: X/10
 Design Quality: X/10
 Flow/Campaign Strategy: X/10
 Overall Score: X/70
+
+IMPORTANT: Output the scorecard EXACTLY in the format above — one score per line, colon then space then score. Do NOT use a markdown table. Do NOT use pipes or dashes. Example line: "Brand Voice: 7/10"
 
 CRITICAL ISSUES
 [Must-fix issues, or "No critical issues identified."]
@@ -658,7 +663,7 @@ async function submitReview(type){
     const text=data.content?.map(b=>b.text||'').join('\n')||'No response received.';
     const status=pStat(text);sp.className='status-pill status-'+status.toLowerCase();sp.textContent=status;
     const sd=pScores(text);if(sd.scores.length>0){sa.innerHTML=rSC(sd);sa.style.display='block';}
-    rtxt.textContent=text;
+    rtxt.innerHTML=formatResult(text);
     reviewHistory.unshift({id:Date.now(),name:sub.data['Campaign Name']||sub.data['Flow Name'],type:sub.type,status,date:new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}),text});
     renderHistory();
   }catch(err){
@@ -682,6 +687,72 @@ function rSC(data){
   if(data.total){const p=data.total.score/data.total.max;const c=p>=0.75?'#2D6A10':p>=0.5?'#7B5300':'#9B1C1C';h+='<div class="score-card total"><div class="score-num" style="color:'+c+'">'+data.total.score+'/'+data.total.max+'</div><div class="score-label">Overall</div></div>';}
   return h+'</div>';
 }
+function formatResult(text){
+  // Remove leading/trailing dashes used as separators
+  text = text.replace(/^---\n?/,'').replace(/\n?---$/,'').trim();
+  // Split into sections by ## or ###
+  let html = '';
+  const lines = text.split('\n');
+  let inList = false;
+  for(let i=0;i<lines.length;i++){
+    const line = lines[i];
+    if(line.startsWith('### ')){
+      if(inList){html+='</ul>';inList=false;}
+      const cls = line.includes('CRITICAL')||line.includes('FAIL')||line.includes('🚨') ? 'color:#9B1C1C;' : '';
+      html+='<h4 style="font-size:13px;font-weight:700;margin:18px 0 6px;text-transform:uppercase;letter-spacing:0.04em;'+cls+'">'+line.replace(/###\s*/,'').replace(/\*\*/g,'')+'</h4>';
+    } else if(line.startsWith('## ')){
+      if(inList){html+='</ul>';inList=false;}
+      html+='<h3 style="font-size:14px;font-weight:700;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid #e0e0e0;color:#1D1C1D;">'+line.replace(/##\s*/,'')+'</h3>';
+    } else if(line.startsWith('**FINAL STATUS')||line.startsWith('FINAL STATUS')){
+      if(inList){html+='</ul>';inList=false;}
+      const isFail=/FAIL/i.test(line)&&!/WARNING/i.test(line);
+      const isWarn=/WARNING/i.test(line);
+      const isPass=/PASS/i.test(line)&&!/WARNING|FAIL/i.test(line);
+      const bg=isFail?'#FDEAEA':isWarn?'#FEF3CD':'#EAF3DE';
+      const col=isFail?'#9B1C1C':isWarn?'#7B5300':'#2D6A10';
+      html+='<div style="background:'+bg+';color:'+col+';padding:10px 16px;border-radius:8px;font-weight:700;font-size:14px;margin:0 0 16px;">'+line.replace(/\*\*/g,'')+'</div>';
+    } else if(/^Brand Voice:|^UK & IE|^Business Accuracy:|^Product Accuracy:|^Customer Journey|^Design Quality:|^Flow\/Campaign|^Overall Score:/.test(line)){
+      if(inList){html+='</ul>';inList=false;}
+      const parts=line.split(':');
+      if(parts.length>=2){
+        const label=parts[0].trim();
+        const scoreStr=parts.slice(1).join(':').trim();
+        const match=scoreStr.match(/(\d+)\/(\d+)/);
+        if(match){
+          const score=parseInt(match[1]),max=parseInt(match[2]),pct=score/max;
+          const col=pct>=0.75?'#2D6A10':pct>=0.5?'#7B5300':'#9B1C1C';
+          const barCol=pct>=0.75?'#16A34A':pct>=0.5?'#D97706':'#DC2626';
+          const isOverall=label.includes('Overall');
+          html+='<div style="display:flex;align-items:center;gap:10px;margin:6px 0;'+(isOverall?'margin-top:10px;padding-top:10px;border-top:1px solid #e0e0e0;font-weight:700;':'')+'">'+
+            '<span style="font-size:12px;color:#6b6b6b;min-width:180px;flex-shrink:0;">'+label+'</span>'+
+            '<div style="flex:1;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;"><div style="width:'+(pct*100)+'%;height:100%;background:'+barCol+';border-radius:3px;"></div></div>'+
+            '<span style="font-size:13px;font-weight:700;color:'+col+';min-width:40px;text-align:right;">'+score+'/'+max+'</span>'+
+          '</div>';
+        } else {
+          html+='<p style="font-size:13px;line-height:1.7;margin:4px 0;">'+line.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</p>';
+        }
+      }
+    } else if(line.startsWith('- ')||line.startsWith('* ')){
+      if(!inList){html+='<ul style="margin:6px 0 10px 18px;display:flex;flex-direction:column;gap:4px;">';inList=true;}
+      html+='<li style="font-size:13px;line-height:1.6;color:#1D1C1D;">'+line.slice(2).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</li>';
+    } else if(/^\d+\.\s/.test(line)){
+      if(inList){html+='</ul>';inList=false;}
+      html+='<p style="font-size:13px;line-height:1.7;margin:4px 0 4px 4px;">'+line.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</p>';
+    } else if(line.startsWith('> ')){
+      if(inList){html+='</ul>';inList=false;}
+      html+='<blockquote style="border-left:3px solid #E6017E;padding:6px 12px;margin:8px 0;background:#FFF0F8;border-radius:0 6px 6px 0;font-size:13px;color:#1D1C1D;font-style:italic;">'+line.slice(2).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</blockquote>';
+    } else if(line.trim()==='---'||line.trim()===''){
+      if(inList){html+='</ul>';inList=false;}
+      if(line.trim()===''){html+='<div style="height:4px;"></div>';}
+    } else if(line.trim()!==''){
+      if(inList){html+='</ul>';inList=false;}
+      html+='<p style="font-size:13px;line-height:1.7;margin:4px 0;">'+line.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`(.*?)`/g,'<code style="background:#f0f0f2;padding:1px 5px;border-radius:3px;font-size:12px;">$1</code>')+'</p>';
+    }
+  }
+  if(inList)html+='</ul>';
+  return html;
+}
+
 function renderHistory(){
   const c=document.getElementById('history-list');
   if(!reviewHistory.length){c.innerHTML='<div style="text-align:center;color:var(--text2);font-size:14px;padding:30px;width:100%"><i class="ti ti-inbox" style="font-size:32px;display:block;margin-bottom:10px;color:var(--border2)"></i>No reviews yet this session</div>';return;}
@@ -694,7 +765,7 @@ function showH(id){
   document.getElementById('loading-wrap').style.display='none';
   const sa=document.getElementById('scorecard-area'),sd=pScores(item.text);
   if(sd.scores.length>0){sa.innerHTML=rSC(sd);sa.style.display='block';}else sa.style.display='none';
-  document.getElementById('result-text').textContent=item.text;
+  document.getElementById('result-text').innerHTML=formatResult(item.text);
   document.getElementById('result-area').style.display='block';
   document.getElementById('result-area').scrollIntoView({behavior:'smooth',block:'start'});
 }
