@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bathshack QA Review Tool</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  :root {
+    --bs-pink: #E6017E;
+    --bs-black: #1D1C1D;
+    --bg: #ffffff;
+    --bg2: #f6f6f7;
+    --bg3: #efefef;
+    --border: #e0e0e0;
+    --border2: #d0d0d0;
+    --text: #1D1C1D;
+    --text2: #6b6b6b;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f0f2; min-height: 100vh; padding: 20px; color: var(--text); }
+  .page-wrap { max-width: 860px; margin: 0 auto; }
+  .qa-header { background: var(--bs-pink); padding: 18px 24px; border-radius: var(--radius-lg); margin-bottom: 20px; display: flex; align-items: center; gap: 14px; }
+  .qa-logo { font-size: 22px; font-weight: 600; color: white; letter-spacing: -0.5px; }
+  .qa-logo span { opacity: 0.75; font-weight: 400; }
+  .qa-subtitle { font-size: 12px; color: rgba(255,255,255,0.72); margin-top: 2px; }
+  .qa-badge { background: rgba(255,255,255,0.2); color: white; font-size: 11px; padding: 4px 12px; border-radius: 20px; margin-left: auto; white-space: nowrap; }
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 16px; overflow: hidden; }
+  .tab-row { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tab-btn { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 14px; font-size: 13px; color: var(--text2); cursor: pointer; transition: all 0.12s; font-family: inherit; }
+  .tab-btn:hover { background: var(--bg2); color: var(--text); }
+  .tab-btn.active { background: var(--bs-pink); border-color: var(--bs-pink); color: white; }
+  .tab-panel { display: none; padding: 20px; }
+  .tab-panel.active { display: block; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .form-label .req { color: var(--bs-pink); margin-left: 2px; }
+  input[type=text], input[type=date], select, textarea {
+    background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius);
+    padding: 9px 12px; font-size: 14px; color: var(--text); font-family: inherit; width: 100%; resize: vertical;
+  }
+  input[type=text]:focus, input[type=date]:focus, select:focus, textarea:focus { outline: none; border-color: var(--bs-pink); box-shadow: 0 0 0 3px rgba(230,1,126,0.08); }
+  textarea { min-height: 80px; }
+  .sec-title { font-size: 12px; font-weight: 600; color: var(--text2); padding: 12px 0 9px; border-bottom: 1px solid var(--border); margin-bottom: 14px; display: flex; align-items: center; gap: 7px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .sec-title i { color: var(--bs-pink); font-size: 16px; }
+  .submit-row { display: flex; gap: 10px; margin-top: 20px; align-items: center; }
+  .btn-primary { background: var(--bs-pink); color: white; border: none; border-radius: var(--radius); padding: 11px 24px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: inherit; transition: opacity 0.12s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-sec { background: transparent; color: var(--text2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 10px 18px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .btn-sec:hover { background: var(--bg2); }
+  .info-bar { background: var(--bg2); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: var(--text2); margin-bottom: 16px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+  .info-bar i { color: var(--bs-pink); flex-shrink: 0; margin-top: 1px; font-size: 16px; }
+  .threshold-bar { background: #E6F1FB; border: 1px solid #85B7EB; border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: #185FA5; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .threshold-bar strong { color: #0C447C; }
+  .upload-zone { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 22px 16px; text-align: center; cursor: pointer; transition: all 0.12s; background: var(--bg2); }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--bs-pink); background: #FFF0F8; }
+  .upload-zone input[type=file] { display: none; }
+  .upload-icon { font-size: 28px; color: var(--text2); display: block; margin-bottom: 6px; }
+  .upload-zone-label { font-size: 13px; color: var(--text2); display: block; line-height: 1.5; }
+  .upload-zone-sub { font-size: 11px; color: var(--text2); margin-top: 4px; display: block; opacity: 0.7; }
+  .preview-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .preview-thumb { position: relative; width: 90px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  .preview-thumb img { width: 100%; height: 70px; object-fit: cover; display: block; }
+  .rm-btn { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 4px; width: 20px; height: 20px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+  .preview-label { font-size: 10px; color: var(--text2); text-align: center; padding: 3px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .no-upload-warn { background: #FEF3CD; border: 1px solid #F0AD00; border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: #7B5300; margin-top: 10px; display: none; align-items: center; gap: 8px; }
+  .result-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-top: 20px; overflow: hidden; }
+  .result-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--bg2); }
+  .result-title { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+  .status-pill { font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 20px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .status-pass { background: #EAF3DE; color: #2D6A10; }
+  .status-warning { background: #FEF3CD; color: #7B5300; }
+  .status-fail { background: #FDEAEA; color: #9B1C1C; }
+  .status-reviewing { background: var(--bg2); color: var(--text2); }
+  .result-body { padding: 20px; }
+  .result-text { font-size: 13px; line-height: 1.8; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+  .scorecard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin: 16px 0; }
+  .score-card { background: var(--bg2); border-radius: var(--radius); padding: 12px; text-align: center; border: 1px solid var(--border); }
+  .score-card.total { border-color: var(--bs-pink); background: #FFF0F8; }
+  .score-num { font-size: 22px; font-weight: 700; }
+  .score-label { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .loading-wrap { padding: 10px 0; }
+  .loading-msg { font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+  .loading-bar { height: 3px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .loading-fill { height: 100%; background: var(--bs-pink); border-radius: 3px; animation: lp 1.4s ease-in-out infinite; width: 55%; }
+  @keyframes lp { 0% { transform: translateX(-100%); } 100% { transform: translateX(210%); } }
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .checklist li { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: var(--text2); padding: 8px 12px; background: var(--bg2); border-radius: var(--radius); line-height: 1.5; border: 1px solid transparent; }
+  .checklist li input[type=checkbox] { accent-color: var(--bs-pink); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; margin-top: 1px; }
+  .checklist li.checked { color: var(--text); background: #F0FFF0; border-color: #C3E6C3; }
+  .checklist-score { background: var(--bg2); border-radius: var(--radius); padding: 14px 18px; display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--bs-pink); border: 1px solid var(--border); border-left-width: 4px; }
+  .history-item { padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+  .history-item:last-child { border-bottom: none; }
+  .history-item:hover { background: var(--bg2); }
+  .history-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .history-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .deadline-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 10px; }
+  .dl-status { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; white-space: nowrap; }
+  .ds-overdue { background: #FDEAEA; color: #9B1C1C; }
+  .ds-today { background: #FEF3CD; color: #7B5300; }
+  .ds-soon { background: #FEF3CD; color: #7B5300; }
+  .ds-ok { background: #EAF3DE; color: #2D6A10; }
+  .ds-done { background: var(--bg2); color: var(--text2); }
+  .ds-hit { background: #EAF3DE; color: #2D6A10; }
+  .ds-missed { background: #FDEAEA; color: #9B1C1C; }
+  .dl-progress { height: 4px; background: var(--bg3); border-radius: 4px; margin: 10px 0 8px; overflow: hidden; }
+  .dl-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .stage-row { display: flex; gap: 5px; flex-wrap: wrap; }
+  .stage-chip { font-size: 11px; padding: 4px 10px; border-radius: 12px; cursor: pointer; border: 1px solid var(--border2); color: var(--text2); background: var(--bg2); transition: all 0.1s; white-space: nowrap; }
+  .stage-chip:hover { border-color: var(--bs-pink); color: var(--bs-pink); }
+  .stage-chip.active-stage { background: var(--bs-pink); border-color: var(--bs-pink); color: white; }
+  .stage-chip.done-stage { background: #EAF3DE; border-color: #7CBF5A; color: #2D6A10; }
+  .add-form { background: var(--bg2); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid var(--border); }
+  .dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .stat-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--text); }
+  .stat-lbl { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .type-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border2); color: var(--text2); background: var(--bg2); white-space: nowrap; }
+  .tf { background: #E6F1FB; border-color: #85B7EB; color: #185FA5; }
+  .tc { background: #FBEAF0; border-color: #ED93B1; color: #993556; }
+  .amend-warn { font-size: 11px; background: #FDEAEA; color: #9B1C1C; padding: 2px 9px; border-radius: 10px; white-space: nowrap; }
+  .live-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .live-row label { font-size: 12px; color: var(--text2); }
+  .live-row input[type=date] { width: auto; font-size: 12px; padding: 4px 8px; }
+  .kb-section { background: var(--bg2); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; border: 1px solid var(--border); }
+  .kb-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .kb-title i { color: var(--bs-pink); }
+  .kb-row { display: flex; gap: 10px; font-size: 12px; color: var(--text2); padding: 5px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; line-height: 1.5; }
+  .kb-row:last-child { border-bottom: none; }
+  .kb-label { font-weight: 600; color: var(--text); min-width: 150px; flex-shrink: 0; }
+  .kb-pass { color: #2D6A10; font-weight: 600; }
+  .kb-fail { color: #9B1C1C; font-weight: 600; }
+  @media (max-width: 600px) {
+    .form-grid, .dl-grid, .stat-row { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    body { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="qa-header">
+    <div>
+      <div class="qa-logo">bath<span>shack</span></div>
+      <div class="qa-subtitle">Email & CRM Quality Assurance</div>
+    </div>
+    <div class="qa-badge"><i class="ti ti-shield-check"></i> Internal QA Gate</div>
+  </div>
+
+  <div class="tab-row" role="tablist">
+    <button class="tab-btn active" onclick="switchTab('campaign',this)">Campaign review</button>
+    <button class="tab-btn" onclick="switchTab('flow',this)">Flow review</button>
+    <button class="tab-btn" onclick="switchTab('checklist',this)">Pre-submit checklist</button>
+    <button class="tab-btn" onclick="switchTab('deadlines',this)">Deadline tracker</button>
+    <button class="tab-btn" onclick="switchTab('kb',this)">Knowledge base</button>
+    <button class="tab-btn" onclick="switchTab('history',this)">Review history</button>
+  </div>
+
+  <!-- CAMPAIGN TAB -->
+  <div class="card">
+  <div id="tab-campaign" class="tab-panel active">
+    <div class="threshold-bar"><i class="ti ti-truck-delivery" style="font-size:16px;flex-shrink:0"></i><span>Free delivery: <strong>UK £499</strong> &nbsp;|&nbsp; <strong>IE €699</strong> &nbsp;|&nbsp; Current promo: <strong>New Site Launch — 3–30 June 2026</strong></span></div>
+    <div class="info-bar"><i class="ti ti-photo"></i><span>Upload your Figma screenshots below. The QA reviewer reads all copy, subject lines, preview text and design directly from the images — no manual input needed.</span></div>
+    <div class="sec-title"><i class="ti ti-send"></i> Campaign information</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Campaign name <span class="req">*</span></label><input type="text" id="c_name" placeholder="e.g. June Sale — Baths & Showers"></div>
+      <div class="form-group"><label class="form-label">Market <span class="req">*</span></label>
+        <select id="c_market"><option value="">Select...</option><option>UK only</option><option>IE only</option><option>Both (separate sends)</option></select></div>
+      <div class="form-group"><label class="form-label">Audience</label><input type="text" id="c_audience" placeholder="e.g. 30-day engaged segment"></div>
+      <div class="form-group"><label class="form-label">Send date</label><input type="date" id="c_send_date"></div>
+      <div class="form-group full"><label class="form-label">Objective</label><input type="text" id="c_objective" placeholder="e.g. Drive traffic to bath category during June sale"></div>
+      <div class="form-group full"><label class="form-label">Offer / promotion</label><input type="text" id="c_offer" placeholder="e.g. New Site Launch — free delivery over £499 (UK) / €699 (IE)"></div>
+      <div class="form-group full"><label class="form-label">Additional context</label><textarea id="c_context" placeholder="Anything the reviewer should know — known issues, dependencies, previous feedback..."></textarea></div>
+    </div>
+    <div class="sec-title" style="margin-top:20px"><i class="ti ti-photo"></i> Figma screenshots <span style="font-weight:400;font-size:11px;margin-left:6px;text-transform:none;letter-spacing:0">— copy, subject line and preview text read directly from these</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Desktop design <span class="req">*</span></label>
+        <div class="upload-zone" id="drop-c-desktop" onclick="document.getElementById('file-c-desktop').click()" ondragover="dov(event,'drop-c-desktop')" ondragleave="dol('drop-c-desktop')" ondrop="dod(event,'c','desktop')">
+          <input type="file" id="file-c-desktop" accept="image/*" multiple onchange="handleFiles(this.files,'c','desktop')">
+          <i class="ti ti-upload upload-icon"></i>
+          <span class="upload-zone-label">Drop desktop screenshot here or click to browse</span>
+          <span class="upload-zone-sub">Subject line, preview text and all copy read from this image</span>
+        </div>
+        <div class="preview-grid" id="prev-c-desktop"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile design <span class="req">*</span></label>
+        <div class="upload-zone" id="drop-c-mobile" onclick="document.getElementById('file-c-mobile').click()" ondragover="dov(event,'drop-c-mobile')" ondragleave="dol('drop-c-mobile')" ondrop="dod(event,'c','mobile')">
+          <input type="file" id="file-c-mobile" accept="image/*" multiple onchange="handleFiles(this.files,'c','mobile')">
+          <i class="ti ti-device-mobile upload-icon"></i>
+          <span class="upload-zone-label">Drop mobile screenshot here or click to browse</span>
+          <span class="upload-zone-sub">Mobile layout, CTA and tap targets reviewed from this</span>
+        </div>
+        <div class="preview-grid" id="prev-c-mobile"></div>
+      </div>
+    </div>
+    <div id="c-no-upload-warn" class="no-upload-warn"><i class="ti ti-alert-triangle"></i><span>At least one screenshot is required to run a QA review.</span></div>
+    <div class="submit-row">
+      <button class="btn-primary" id="btn-campaign" onclick="submitReview('campaign')"><i class="ti ti-shield-check"></i> Run QA review</button>
+      <button class="btn-sec" onclick="clearForm('campaign')">Clear form</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- FLOW TAB -->
+  <div class="card">
+  <div id="tab-flow" class="tab-panel">
+    <div class="threshold-bar"><i class="ti ti-truck-delivery" style="font-size:16px;flex-shrink:0"></i><span>Free delivery: <strong>UK £499</strong> &nbsp;|&nbsp; <strong>IE €699</strong> &nbsp;|&nbsp; Current promo: <strong>New Site Launch — 3–30 June 2026</strong></span></div>
+    <div class="info-bar"><i class="ti ti-photo"></i><span>Upload your Figma screenshots below. The QA reviewer reads all copy, subject lines, preview text and design directly from the images.</span></div>
+    <div class="sec-title"><i class="ti ti-git-branch"></i> Flow information</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Flow name <span class="req">*</span></label><input type="text" id="f_name" placeholder="e.g. Abandoned Checkout — IE"></div>
+      <div class="form-group"><label class="form-label">Market <span class="req">*</span></label>
+        <select id="f_market"><option value="">Select...</option><option>UK only</option><option>IE only</option><option>Both (separate sends)</option></select></div>
+      <div class="form-group"><label class="form-label">Trigger</label><input type="text" id="f_trigger" placeholder="e.g. Checkout Started"></div>
+      <div class="form-group"><label class="form-label">Segment / filter</label><input type="text" id="f_segment" placeholder="e.g. IE subscribers, has not purchased"></div>
+      <div class="form-group"><label class="form-label">Email number in sequence</label><input type="text" id="f_email_num" placeholder="e.g. Email 2 of 3"></div>
+      <div class="form-group"><label class="form-label">Delay timing</label><input type="text" id="f_delay" placeholder="e.g. 1 hour after trigger"></div>
+      <div class="form-group full"><label class="form-label">Purpose of this email</label><input type="text" id="f_purpose" placeholder="e.g. Second reminder — low stock urgency"></div>
+      <div class="form-group full"><label class="form-label">Additional context</label><textarea id="f_context" placeholder="Full flow structure, earlier emails in sequence, known issues..."></textarea></div>
+    </div>
+    <div class="sec-title" style="margin-top:20px"><i class="ti ti-photo"></i> Figma screenshots <span style="font-weight:400;font-size:11px;margin-left:6px;text-transform:none;letter-spacing:0">— copy, subject line and preview text read directly from these</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Desktop design <span class="req">*</span></label>
+        <div class="upload-zone" id="drop-f-desktop" onclick="document.getElementById('file-f-desktop').click()" ondragover="dov(event,'drop-f-desktop')" ondragleave="dol('drop-f-desktop')" ondrop="dod(event,'f','desktop')">
+          <input type="file" id="file-f-desktop" accept="image/*" multiple onchange="handleFiles(this.files,'f','desktop')">
+          <i class="ti ti-upload upload-icon"></i>
+          <span class="upload-zone-label">Drop desktop screenshot here or click to browse</span>
+          <span class="upload-zone-sub">Subject line, preview text and all copy read from this image</span>
+        </div>
+        <div class="preview-grid" id="prev-f-desktop"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile design <span class="req">*</span></label>
+        <div class="upload-zone" id="drop-f-mobile" onclick="document.getElementById('file-f-mobile').click()" ondragover="dov(event,'drop-f-mobile')" ondragleave="dol('drop-f-mobile')" ondrop="dod(event,'f','mobile')">
+          <input type="file" id="file-f-mobile" accept="image/*" multiple onchange="handleFiles(this.files,'f','mobile')">
+          <i class="ti ti-device-mobile upload-icon"></i>
+          <span class="upload-zone-label">Drop mobile screenshot here or click to browse</span>
+          <span class="upload-zone-sub">Mobile layout, CTA and tap targets reviewed from this</span>
+        </div>
+        <div class="preview-grid" id="prev-f-mobile"></div>
+      </div>
+    </div>
+    <div id="f-no-upload-warn" class="no-upload-warn"><i class="ti ti-alert-triangle"></i><span>At least one screenshot is required to run a QA review.</span></div>
+    <div class="submit-row">
+      <button class="btn-primary" id="btn-flow" onclick="submitReview('flow')"><i class="ti ti-shield-check"></i> Run QA review</button>
+      <button class="btn-sec" onclick="clearForm('flow')">Clear form</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- CHECKLIST TAB -->
+  <div class="card">
+  <div id="tab-checklist" class="tab-panel">
+    <div class="threshold-bar"><i class="ti ti-truck-delivery" style="font-size:16px;flex-shrink:0"></i><span>Free delivery: <strong>UK £499</strong> &nbsp;|&nbsp; <strong>IE €699</strong>. Any other figure = compliance failure.</span></div>
+    <div class="info-bar"><i class="ti ti-checklist"></i><span>Work through this yourself before submitting for QA review. These are the things you should be catching first.</span></div>
+    <div class="sec-title"><i class="ti ti-writing"></i> Copy & brand voice</div>
+    <ul class="checklist">
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Read the copy aloud — it sounds like a real person, not a press release</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> No generic AI phrases: "elevate", "seamless", "perfect solution", "take your bathroom to the next level"</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> No short choppy sentences laid out like a bullet-point list</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Tone is warm, helpful and expert — fun where it fits, never pushy</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Subject line is specific to Bathshack — it could not have come from any other retailer</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Preview text adds something new — it does not repeat the subject line</li>
+    </ul>
+    <div class="sec-title"><i class="ti ti-flag-2"></i> UK & IE compliance</div>
+    <ul class="checklist">
+      <li><input type="checkbox" onchange="toggleCheck(this)"> UK and IE are completely separate sends — no crossover whatsoever</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Currency correct: £ for UK, € for IE</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> UK free delivery threshold is exactly £499 — not £299, £350 or any other figure</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> IE free delivery threshold is exactly €699 — not any other figure</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Both markets use www.bathshack.com — URL verified</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> New Site Launch promotion (3–30 June) referenced correctly if applicable</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Bathshack-provided sale designs used — not custom agency designs</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> No UK offers in IE emails and no IE offers in UK emails</li>
+    </ul>
+    <div class="sec-title"><i class="ti ti-truck-delivery"></i> Delivery & service claims</div>
+    <ul class="checklist">
+      <li><input type="checkbox" onchange="toggleCheck(this)"> No next-day delivery promises anywhere in copy or design</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> No "next-day dispatch", "delivered tomorrow" or "instant delivery" language</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> No "guaranteed next-day shipping" language</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Approved delivery language used where needed</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> NI delivery (if referenced) noted correctly — faster than UK mainland</li>
+    </ul>
+    <div class="sec-title"><i class="ti ti-package"></i> Product accuracy</div>
+    <ul class="checklist">
+      <li><input type="checkbox" onchange="toggleCheck(this)"> All featured products checked as live on bathshack.com right now</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Products reference active categories only</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> No discontinued products referenced — e.g. the bathroom planner</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Any stated pricing verified against the live site</li>
+    </ul>
+    <div class="sec-title"><i class="ti ti-device-mobile"></i> Design & assets</div>
+    <ul class="checklist">
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Desktop Figma screenshot exported and ready to upload</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Mobile Figma screenshot exported and ready to upload</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> CTA is prominent, clearly labelled and easy to tap on mobile</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Logo usage follows brand guidelines</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> Imagery is lifestyle-led and on-brand</li>
+      <li><input type="checkbox" onchange="toggleCheck(this)"> No pricing or compliance claims visible in the design that differ from copy</li>
+    </ul>
+    <div class="checklist-score" id="checklist-score">
+      <i class="ti ti-chart-pie" style="color:var(--bs-pink);font-size:22px;flex-shrink:0"></i>
+      <div>
+        <div style="font-size:12px;color:var(--text2)">Pre-submit completion</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)" id="checklist-pct">0 / 27 items checked</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- DEADLINES TAB -->
+  <div class="card">
+  <div id="tab-deadlines" class="tab-panel">
+    <div class="info-bar"><i class="ti ti-calendar-clock"></i><span>Track every flow and campaign. Click stage chips to advance. Once live, enter the actual go-live date to see whether the deadline was hit.</span></div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" id="dl-total">0</div><div class="stat-lbl">Total tracked</div></div>
+      <div class="stat-box"><div class="stat-num" id="dl-overdue" style="color:#9B1C1C">0</div><div class="stat-lbl">Overdue</div></div>
+      <div class="stat-box"><div class="stat-num" id="dl-due-today" style="color:#7B5300">0</div><div class="stat-lbl">Due today</div></div>
+      <div class="stat-box"><div class="stat-num" id="dl-live" style="color:#2D6A10">0</div><div class="stat-lbl">Live</div></div>
+    </div>
+    <div class="add-form">
+      <div class="sec-title" style="margin-top:0;border:none;padding-top:0"><i class="ti ti-plus"></i> Add to tracker</div>
+      <div class="dl-grid">
+        <div class="form-group"><label class="form-label">Name</label><input type="text" id="dl_name" placeholder="e.g. July Sale — UK"></div>
+        <div class="form-group"><label class="form-label">Type</label>
+          <select id="dl_type"><option value="flow">Flow</option><option value="campaign">Campaign</option></select></div>
+        <div class="form-group"><label class="form-label">Market</label>
+          <select id="dl_market"><option value="">Select...</option><option>UK</option><option>IE</option><option>Both</option></select></div>
+        <div class="form-group"><label class="form-label">QA deadline <span class="req">*</span></label><input type="date" id="dl_qa_deadline"></div>
+        <div class="form-group full"><label class="form-label">Notes</label><input type="text" id="dl_notes" placeholder="Designer, dependencies, known issues..."></div>
+      </div>
+      <button class="btn-primary" onclick="addDeadline()" style="width:auto"><i class="ti ti-plus"></i> Add to tracker</button>
+    </div>
+    <div id="deadlines-list"></div>
+  </div>
+  </div>
+
+  <!-- KB TAB -->
+  <div class="card">
+  <div id="tab-kb" class="tab-panel">
+    <div class="info-bar"><i class="ti ti-database"></i><span>Everything here is loaded into the AI reviewer on every submission. This is what gets checked on every QA review.</span></div>
+    <div class="kb-section">
+      <div class="kb-title"><i class="ti ti-truck-delivery"></i> Delivery thresholds & costs</div>
+      <div class="kb-row"><span class="kb-label">UK mainland</span><span>3–4 working days · Small £7 · Medium £10.99 · Large £49.99 · <span class="kb-pass">Free over £499</span></span></div>
+      <div class="kb-row"><span class="kb-label">Northern Ireland</span><span>Next working day (faster than mainland) · Small £7 · Medium £10.99 · Large £29.99</span></div>
+      <div class="kb-row"><span class="kb-label">Republic of Ireland</span><span>1–2 working days · Small €15.99 · Medium €49.99 · <span class="kb-pass">Free over €699</span></span></div>
+    </div>
+    <div class="kb-section">
+      <div class="kb-title"><i class="ti ti-check"></i> Approved delivery language</div>
+      <div class="kb-row"><span class="kb-pass">✓</span><span>Delivered directly from trusted suppliers</span></div>
+      <div class="kb-row"><span class="kb-pass">✓</span><span>Check product pages for delivery information</span></div>
+      <div class="kb-row"><span class="kb-pass">✓</span><span>Delivery times vary by product</span></div>
+    </div>
+    <div class="kb-section">
+      <div class="kb-title"><i class="ti ti-x"></i> Banned delivery language</div>
+      <div class="kb-row"><span class="kb-fail">✗</span><span>Next-day delivery · Next-day dispatch · Delivered tomorrow · Instant delivery · Guaranteed next-day shipping</span></div>
+    </div>
+    <div class="kb-section">
+      <div class="kb-title"><i class="ti ti-flag-2"></i> UK & IE rules</div>
+      <div class="kb-row"><span class="kb-label">UK free delivery</span><span class="kb-pass">£499</span></div>
+      <div class="kb-row"><span class="kb-label">IE free delivery</span><span class="kb-pass">€699</span></div>
+      <div class="kb-row"><span class="kb-label">Current promotion</span><span>New Site Launch — 3 June to 30 June 2026</span></div>
+      <div class="kb-row"><span class="kb-label">Promotion URL</span><span>https://www.bathshack.com/collections/new-site-launch (both markets)</span></div>
+    </div>
+    <div class="kb-section">
+      <div class="kb-title"><i class="ti ti-package"></i> Active product categories</div>
+      <div class="kb-row"><span>Baths · Toilets · Showers · Bathroom Furniture · Mirrors · Radiators · Tiles · Basins · Taps · Enclosures · Panels · Flooring</span></div>
+    </div>
+    <div class="kb-section">
+      <div class="kb-title"><i class="ti ti-writing"></i> Brand voice</div>
+      <div class="kb-row"><span class="kb-label kb-pass">Good</span><span>"I like big TUBs and I cannot lie" — playful, human, bathroom-specific</span></div>
+      <div class="kb-row"><span class="kb-label kb-fail">Bad</span><span>"Elevate your bathroom experience" / "Upgrade with this sleek look" — generic, AI-sounding</span></div>
+    </div>
+    <div class="kb-section">
+      <div class="kb-title"><i class="ti ti-alert-triangle"></i> Common agency mistakes</div>
+      <div class="kb-row"><span class="kb-label">Month 1</span><span><span class="kb-fail">UK/IE</span> — Used UK free delivery threshold in IE email</span></div>
+      <div class="kb-row"><span class="kb-label">Month 1</span><span><span class="kb-fail">Product</span> — Referenced discontinued bathroom planner</span></div>
+      <div class="kb-row"><span class="kb-label">Month 1</span><span><span class="kb-fail">Brand Voice</span> — Generic AI copy used throughout</span></div>
+      <div class="kb-row"><span class="kb-label">Month 1</span><span><span class="kb-fail">Operations</span> — Next-day dispatch implied in copy</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div class="card">
+  <div id="tab-history" class="tab-panel">
+    <div class="info-bar"><i class="ti ti-history"></i><span>All reviews from this session. History clears when you close or refresh the page.</span></div>
+    <div id="history-list" style="min-height:80px;display:flex;align-items:center;justify-content:center">
+      <div style="text-align:center;color:var(--text2);font-size:14px;padding:30px">
+        <i class="ti ti-inbox" style="font-size:32px;display:block;margin-bottom:10px;color:var(--border2)"></i>
+        No reviews yet this session
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-area" style="display:none">
+    <div class="result-card">
+      <div class="result-header">
+        <i class="ti ti-shield-check" style="color:var(--bs-pink);font-size:18px"></i>
+        <span class="result-title" id="result-title">QA Review</span>
+        <div id="status-pill" class="status-pill status-reviewing">Reviewing...</div>
+      </div>
+      <div class="result-body">
+        <div id="loading-wrap" class="loading-wrap">
+          <div class="loading-msg" id="loading-msg">Reading design screenshots...</div>
+          <div class="loading-bar"><div class="loading-fill"></div></div>
+        </div>
+        <div id="scorecard-area" style="display:none"></div>
+        <div class="result-text" id="result-text"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const PROXY_URL = 'https://nameless-firefly-cf9d.lorraine-kelly.workers.dev';
+
+const SYSTEM_PROMPT = `You are Bathshack's internal Email, CRM and Automation Quality Assurance Manager. You are strict, thorough and sceptical. Flag everything that looks wrong or cannot be verified.
+
+IMPORTANT: All email copy, subject lines and preview text will be read directly from the uploaded Figma screenshots. Extract and quote the exact text you can see in the images when referencing copy in your review.
+
+━━━━━━━━━━━━━━━━━━━━━━
+BUSINESS CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━
+Bathshack: bathroom and tile retailer, 13 stores, strong ecommerce. Founded 2009, family-run. High-consideration purchases — customers research for weeks or months. Not impulse purchases. Flag messaging suited to fashion, fast-moving ecommerce or impulse categories.
+
+━━━━━━━━━━━━━━━━━━━━━━
+BRAND VOICE
+━━━━━━━━━━━━━━━━━━━━━━
+We are: Helpful. Fun. Friendly. Knowledgeable. Confident. Trustworthy. Human.
+Speak as a friendly expert who genuinely loves helping people design bathrooms they'll feel proud of. Warmth, clarity, playful personality. Human, light, enjoyable — inspiring, not overwhelming.
+GOOD: "I like big TUBs and I cannot lie" — playful, human, bathroom-specific.
+BAD: "Elevate your bathroom experience" / "Upgrade with this sleek look" — generic, templated, AI-sounding.
+NOTE: "upgrade" as a standalone word in other contexts is acceptable.
+Flag AI-generated-feeling copy — especially short choppy sentences with full stops laid out like a ChatGPT list. Quote exact text from screenshots, explain why it fails, suggest direction without rewriting.
+
+━━━━━━━━━━━━━━━━━━━━━━
+UK & IE COMPLIANCE — CRITICAL — AUTO-FAIL IF BREACHED
+━━━━━━━━━━━━━━━━━━━━━━
+UK and IE must be completely separated. Any crossover = FAIL.
+WEBSITES: Both markets use www.bathshack.com
+CURRENCY: UK = £ (GBP) | IE = € (EUR)
+FREE DELIVERY THRESHOLDS — ONLY CORRECT VALUES:
+  UK: £499 — flag any other figure
+  IE: €699 — flag any other figure
+DELIVERY COSTS & TIMINGS:
+  UK Mainland: 3–4 working days | Small £7 | Medium £10.99 | Large £49.99 | Free over £499
+  Northern Ireland: Next working day (FASTER than mainland) | Small £7 | Medium £10.99 | Large £29.99
+  Republic of Ireland: 1–2 working days | Small €15.99 | Medium €49.99 | Free over €699
+APPROVED DELIVERY LANGUAGE ONLY:
+  "Delivered directly from trusted suppliers"
+  "Check product pages for delivery information"
+  "Delivery times vary by product"
+BANNED DELIVERY LANGUAGE:
+  Next-day delivery | Next-day dispatch | Delivered tomorrow | Instant delivery | Guaranteed next-day shipping
+CURRENT PROMOTION (June 2026):
+  Name: New Site Launch | Dates: 3–30 June 2026
+  URL: https://www.bathshack.com/collections/new-site-launch (same both markets)
+  Rule: Bathshack-provided sale designs must be used — not custom agency designs
+
+━━━━━━━━━━━━━━━━━━━━━━
+ACTIVE PRODUCT CATEGORIES
+━━━━━━━━━━━━━━━━━━━━━━
+Baths, Toilets, Showers, Bathroom Furniture, Mirrors, Radiators, Tiles, Basins, Taps, Enclosures, Panels, Flooring.
+Flag anything outside this list. The bathroom planner is discontinued — flag any reference to it.
+
+━━━━━━━━━━━━━━━━━━━━━━
+COMMON AGENCY MISTAKES
+━━━━━━━━━━━━━━━━━━━━━━
+1. UK/IE: Wrong free delivery threshold in wrong market
+2. Product: Referencing discontinued bathroom planner
+3. Brand Voice: Generic AI copy — short choppy sentences, templated phrases
+4. Operations: Implying next-day dispatch
+
+━━━━━━━━━━━━━━━━━━━━━━
+DESIGN REVIEW
+━━━━━━━━━━━━━━━━━━━━━━
+Read all copy, subject lines, preview text and claims directly from the screenshots. Then review:
+- Layout hierarchy — key message immediately clear?
+- CTA — obvious and accessible on desktop and mobile?
+- Brand colours: Bathshack pink #E6017E, black, white. Font: Silka.
+- Any visible pricing, delivery claims, thresholds — flag anything not matching £499 UK / €699 IE
+- Logo usage per brand guidelines
+- Mobile readability and tap target sizes
+- Overall trust and professionalism for a considered-purchase brand
+
+━━━━━━━━━━━━━━━━━━━━━━
+LIFECYCLE STRATEGY
+━━━━━━━━━━━━━━━━━━━━━━
+Campaigns must target 30, 60 or 90-day engaged segments — not full list. Own-brand labels (Eliseo Ricci, Viktor Benson, Josef Martin, Kiimat, Objekt Ceramica) are priority hero placements. Max 4 sends per profile per 7 days.
+
+━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━
+---
+QA REVIEW
+FINAL STATUS: [PASS / WARNING / FAIL]
+
+EXECUTIVE SUMMARY
+[2-4 sentences on overall quality]
+
+SCORECARD
+Brand Voice: X/10
+UK & IE Compliance: X/10
+Business Accuracy: X/10
+Product Accuracy: X/10
+Customer Journey Alignment: X/10
+Design Quality: X/10
+Flow/Campaign Strategy: X/10
+Overall Score: X/70
+
+CRITICAL ISSUES
+[Must-fix issues, or "No critical issues identified."]
+
+RECOMMENDED IMPROVEMENTS
+[Non-mandatory improvements]
+
+GENERIC AI COPY CHECK
+[Quote exact text from screenshots. Explain why it fails. Suggest direction without rewriting.]
+
+UK & IE COMPLIANCE CHECK
+Status: PASS or FAIL
+[Issues found, or "No issues identified."]
+
+DESIGN REVIEW
+[Full findings from screenshots — layout, CTA, mobile, brand colours, visible copy and compliance claims.]
+
+FINAL RECOMMENDATION
+[Ready for Approval / Requires Minor Changes / Requires Major Changes / Reject and Rewrite]
+---`;
+
+let imgs={c:{desktop:[],mobile:[]},f:{desktop:[],mobile:[]}};
+let reviewHistory=[];
+const TODAY=new Date();
+const FS=['Brief','Copy draft','Design','QA round 1','Amends','QA round 2','Final approval','Live'];
+const CS=['Brief','Design','QA round 1','Amends','QA round 2','Final approval','Live'];
+let deadlines=[
+  {id:1,name:'Welcome Sequence',type:'flow',market:'Both',qa:'2026-06-10',actual:'',notes:'UK & IE consolidated — Evernue roadmap',stage:0,done:[],amends:0,flagged:false},
+  {id:2,name:'Post Purchase Replenishment',type:'flow',market:'Both',qa:'2026-06-11',actual:'',notes:'Phase 1 post-purchase build',stage:0,done:[],amends:0,flagged:false},
+  {id:3,name:'Abandoned Checkout',type:'flow',market:'Both',qa:'2026-06-12',actual:'',notes:'Remapped to Shopify triggers',stage:0,done:[],amends:0,flagged:false},
+  {id:4,name:'Browse Abandonment',type:'flow',market:'Both',qa:'2026-06-15',actual:'',notes:'Anonymous tracking — target RPR £8-12',stage:0,done:[],amends:0,flagged:false},
+  {id:5,name:'Abandoned Cart',type:'flow',market:'Both',qa:'2026-06-17',actual:'',notes:'Remapped to Shopify triggers',stage:0,done:[],amends:0,flagged:false},
+  {id:6,name:'Sunset Unengaged',type:'flow',market:'Both',qa:'2026-06-19',actual:'',notes:'Protects deliverability — target unsub below 0.30%',stage:0,done:[],amends:0,flagged:false},
+  {id:7,name:'Post Purchase Education',type:'flow',market:'Both',qa:'2026-06-23',actual:'',notes:'Install guidance + cross-category test',stage:0,done:[],amends:0,flagged:false},
+  {id:8,name:'Post Purchase Thank You',type:'flow',market:'Both',qa:'2026-06-26',actual:'',notes:'Order confirmation + delivery reassurance',stage:0,done:[],amends:0,flagged:false}
+];
+let nid=9;
+
+function dov(e,z){e.preventDefault();document.getElementById(z).classList.add('dragover')}
+function dol(z){document.getElementById(z).classList.remove('dragover')}
+function dod(e,t,s){e.preventDefault();dol('drop-'+t+'-'+s);handleFiles(e.dataTransfer.files,t,s)}
+function handleFiles(files,t,s){
+  Array.from(files).forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const r=new FileReader();
+    r.onload=e=>{imgs[t][s].push({b64:e.target.result.split(',')[1],mime:f.type,name:f.name,preview:e.target.result});renderPreviews(t,s);checkWarn(t)};
+    r.readAsDataURL(f);
+  });
+}
+function renderPreviews(t,s){
+  const c=document.getElementById('prev-'+t+'-'+s);c.innerHTML='';
+  imgs[t][s].forEach((img,i)=>{
+    const w=document.createElement('div');
+    w.innerHTML='<div class="preview-thumb"><img src="'+img.preview+'" alt="Screenshot"><button class="rm-btn" onclick="removeImg(\''+t+'\',\''+s+'\','+i+')">✕</button><div class="preview-label">'+img.name+'</div></div>';
+    c.appendChild(w.firstChild);
+  });
+}
+function removeImg(t,s,i){imgs[t][s].splice(i,1);renderPreviews(t,s);checkWarn(t)}
+function checkWarn(t){
+  const w=document.getElementById(t+'-no-upload-warn');
+  if(w)w.style.display=(imgs[t].desktop.length>0||imgs[t].mobile.length>0)?'none':'flex';
+}
+
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  if(tab!=='campaign'&&tab!=='flow')document.getElementById('result-area').style.display='none';
+}
+
+function clearForm(type){
+  const p=type==='campaign'?'c_':'f_',t=type==='campaign'?'c':'f';
+  ['name','market','audience','send_date','objective','offer','context','trigger','segment','email_num','delay','purpose'].forEach(f=>{const el=document.getElementById(p+f);if(el)el.value=''});
+  imgs[t].desktop=[];imgs[t].mobile=[];
+  renderPreviews(t,'desktop');renderPreviews(t,'mobile');
+  document.getElementById(t+'-no-upload-warn').style.display='none';
+  document.getElementById('result-area').style.display='none';
+}
+
+function gather(type){
+  const iC=type==='campaign',p=iC?'c_':'f_',t=iC?'c':'f';
+  const g=id=>document.getElementById(id)?.value?.trim()||'';
+  const hasImg=imgs[t].desktop.length>0||imgs[t].mobile.length>0;
+  const data=iC?{
+    'Campaign Name':g('c_name')||'[NOT PROVIDED]','Market':g('c_market')||'[NOT PROVIDED]',
+    'Audience':g('c_audience')||'[Not provided]','Send Date':g('c_send_date')||'[Not provided]',
+    'Objective':g('c_objective')||'[Not provided]','Offer':g('c_offer')||'[Not provided]',
+    'Additional Context':g('c_context')||'[None]'
+  }:{
+    'Flow Name':g('f_name')||'[NOT PROVIDED]','Market':g('f_market')||'[NOT PROVIDED]',
+    'Trigger':g('f_trigger')||'[Not provided]','Segment':g('f_segment')||'[Not provided]',
+    'Email Number':g('f_email_num')||'[Not provided]','Delay':g('f_delay')||'[Not provided]',
+    'Purpose':g('f_purpose')||'[Not provided]','Additional Context':g('f_context')||'[None]'
+  };
+  return{type:iC?'Campaign':'Automation Flow',data,images:imgs[t],hasImg};
+}
+
+function buildMessages(sub){
+  const content=[];
+  let txt='SUBMISSION TYPE: '+sub.type+'\nDELIVERY THRESHOLDS: UK=£499 | IE=€699\nCURRENT PROMOTION: New Site Launch, 3-30 June 2026\n\n';
+  for(const[k,v]of Object.entries(sub.data))txt+=k.toUpperCase()+':\n'+v+'\n\n';
+  const hD=sub.images.desktop.length>0,hM=sub.images.mobile.length>0;
+  if(hD||hM){
+    txt+='SCREENSHOTS: '+(hD?sub.images.desktop.length+' desktop':'')+(hD&&hM?' + ':'')+(hM?sub.images.mobile.length+' mobile':'')+' provided.\n';
+    txt+='Read ALL copy, subject lines, preview text and compliance claims directly from these images. Quote exact text in your review.\n\nConduct the full QA review now.';
+  }else{
+    txt+='NO SCREENSHOTS PROVIDED. Flag as critical missing element.';
+  }
+  content.push({type:'text',text:txt});
+  sub.images.desktop.forEach((img,i)=>{content.push({type:'text',text:'Desktop screenshot '+(i+1)+':'});content.push({type:'image',source:{type:'base64',media_type:img.mime,data:img.b64}})});
+  sub.images.mobile.forEach((img,i)=>{content.push({type:'text',text:'Mobile screenshot '+(i+1)+':'});content.push({type:'image',source:{type:'base64',media_type:img.mime,data:img.b64}})});
+  return[{role:'user',content}];
+}
+
+const LM=['Reading design screenshots...','Extracting copy and subject lines from images...','Checking brand voice...','Verifying compliance — £499 UK / €699 IE...','Cross-checking product categories...','Checking agency mistakes log...','Finalising QA report...'];
+let li_int;
+
+async function submitReview(type){
+  const sub=gather(type);
+  if(!sub.hasImg){document.getElementById(type[0]+'-no-upload-warn').style.display='flex';return;}
+  const btn=document.getElementById('btn-'+type);btn.disabled=true;
+  const ra=document.getElementById('result-area'),rt=document.getElementById('result-title'),sp=document.getElementById('status-pill'),lw=document.getElementById('loading-wrap'),sa=document.getElementById('scorecard-area'),rtxt=document.getElementById('result-text'),lm=document.getElementById('loading-msg');
+  ra.style.display='block';
+  rt.textContent=(sub.data['Campaign Name']||sub.data['Flow Name'])+' — QA review';
+  sp.className='status-pill status-reviewing';sp.textContent='Reviewing...';
+  lw.style.display='block';sa.style.display='none';sa.innerHTML='';rtxt.textContent='';
+  let mi=0;lm.textContent=LM[0];
+  li_int=setInterval(()=>{mi=(mi+1)%LM.length;lm.textContent=LM[mi]},2100);
+  ra.scrollIntoView({behavior:'smooth',block:'start'});
+  try{
+    const resp=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:SYSTEM_PROMPT,messages:buildMessages(sub)})});
+    const data=await resp.json();
+    clearInterval(li_int);lw.style.display='none';
+    if(data.error){sp.className='status-pill status-warning';sp.textContent='Error';rtxt.textContent='API error: '+data.error.message;btn.disabled=false;return;}
+    const text=data.content?.map(b=>b.text||'').join('\n')||'No response received.';
+    const status=pStat(text);sp.className='status-pill status-'+status.toLowerCase();sp.textContent=status;
+    const sd=pScores(text);if(sd.scores.length>0){sa.innerHTML=rSC(sd);sa.style.display='block';}
+    rtxt.textContent=text;
+    reviewHistory.unshift({id:Date.now(),name:sub.data['Campaign Name']||sub.data['Flow Name'],type:sub.type,status,date:new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}),text});
+    renderHistory();
+  }catch(err){
+    clearInterval(li_int);lw.style.display='none';
+    sp.className='status-pill status-warning';sp.textContent='Error';
+    rtxt.textContent='Connection error: '+err.message+'\n\nCheck that the Cloudflare Worker is deployed and the ANTHROPIC_API_KEY secret is set.';
+  }
+  btn.disabled=false;
+}
+
+function pStat(t){if(/FINAL STATUS:\s*FAIL/i.test(t))return'FAIL';if(/FINAL STATUS:\s*WARNING/i.test(t))return'WARNING';if(/FINAL STATUS:\s*PASS/i.test(t))return'PASS';return'WARNING'}
+function pScores(text){
+  const fields=[['Brand Voice','Brand Voice'],['UK & IE','UK.*IE Compliance'],['Business','Business Accuracy'],['Product','Product Accuracy'],['Journey','Customer Journey'],['Design','Design Quality'],['Strategy','Flow.*Campaign Strategy|Campaign.*Flow Strategy']];
+  const scores=fields.map(([l,p])=>{const m=text.match(new RegExp(p+':\\s*(\\d+)\\/(\\d+)','i'));return m?{label:l,score:parseInt(m[1]),max:parseInt(m[2])}:null}).filter(Boolean);
+  const tm=text.match(/Overall Score:\s*(\d+)\/(\d+)/i);
+  return{scores,total:tm?{score:parseInt(tm[1]),max:parseInt(tm[2])}:null};
+}
+function rSC(data){
+  let h='<div class="scorecard-grid">';
+  data.scores.forEach(s=>{const p=s.score/s.max;const c=p>=0.75?'#2D6A10':p>=0.5?'#7B5300':'#9B1C1C';h+='<div class="score-card"><div class="score-num" style="color:'+c+'">'+s.score+'/'+s.max+'</div><div class="score-label">'+s.label+'</div></div>'});
+  if(data.total){const p=data.total.score/data.total.max;const c=p>=0.75?'#2D6A10':p>=0.5?'#7B5300':'#9B1C1C';h+='<div class="score-card total"><div class="score-num" style="color:'+c+'">'+data.total.score+'/'+data.total.max+'</div><div class="score-label">Overall</div></div>';}
+  return h+'</div>';
+}
+function renderHistory(){
+  const c=document.getElementById('history-list');
+  if(!reviewHistory.length){c.innerHTML='<div style="text-align:center;color:var(--text2);font-size:14px;padding:30px;width:100%"><i class="ti ti-inbox" style="font-size:32px;display:block;margin-bottom:10px;color:var(--border2)"></i>No reviews yet this session</div>';return;}
+  c.innerHTML=reviewHistory.map(r=>'<div class="history-item" onclick="showH('+r.id+')"><div style="display:flex;align-items:center;gap:8px"><span class="history-name">'+r.name+'</span><span class="status-pill status-'+r.status.toLowerCase()+'" style="font-size:10px;padding:2px 9px">'+r.status+'</span></div><div class="history-meta">'+r.type+' · '+r.date+'</div></div>').join('');
+}
+function showH(id){
+  const item=reviewHistory.find(r=>r.id===id);if(!item)return;
+  document.getElementById('result-title').textContent=item.name+' — QA review';
+  const sp=document.getElementById('status-pill');sp.className='status-pill status-'+item.status.toLowerCase();sp.textContent=item.status;
+  document.getElementById('loading-wrap').style.display='none';
+  const sa=document.getElementById('scorecard-area'),sd=pScores(item.text);
+  if(sd.scores.length>0){sa.innerHTML=rSC(sd);sa.style.display='block';}else sa.style.display='none';
+  document.getElementById('result-text').textContent=item.text;
+  document.getElementById('result-area').style.display='block';
+  document.getElementById('result-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function toggleCheck(cb){
+  cb.parentElement.classList.toggle('checked',cb.checked);
+  const total=document.querySelectorAll('.checklist input[type=checkbox]').length;
+  const checked=document.querySelectorAll('.checklist input[type=checkbox]:checked').length;
+  document.getElementById('checklist-pct').textContent=checked+' / '+total+' items checked';
+  const el=document.getElementById('checklist-score'),p=checked/total;
+  el.style.borderLeftColor=p>=0.9?'#7CBF5A':p>=0.6?'#F0AD00':'var(--bs-pink)';
+}
+function addDeadline(){
+  const name=document.getElementById('dl_name').value.trim(),type=document.getElementById('dl_type').value,market=document.getElementById('dl_market').value,qa=document.getElementById('dl_qa_deadline').value,notes=document.getElementById('dl_notes').value.trim();
+  if(!name||!qa){alert('Please enter a name and QA deadline.');return;}
+  deadlines.unshift({id:nid++,name,type,market,qa,actual:'',notes,stage:0,done:[],amends:0,flagged:false});
+  ['dl_name','dl_market','dl_qa_deadline','dl_notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  renderDeadlines();
+}
+function setStage(id,idx){
+  const dl=deadlines.find(d=>d.id===id);if(!dl)return;
+  const stages=dl.type==='flow'?FS:CS;
+  if(stages[idx]&&stages[idx].toLowerCase().includes('amend'))dl.amends++;
+  dl.stage=idx;dl.done=stages.slice(0,idx).map((_,i)=>i);
+  if(idx===stages.length-1&&!dl.actual)dl.actual=new Date().toISOString().slice(0,10);
+  renderDeadlines();
+}
+function setActual(id,val){const dl=deadlines.find(d=>d.id===id);if(dl){dl.actual=val;renderDeadlines();}}
+function toggleFlag(id){const dl=deadlines.find(d=>d.id===id);if(dl){dl.flagged=!dl.flagged;renderDeadlines();}}
+function removeDL(id){deadlines=deadlines.filter(d=>d.id!==id);renderDeadlines();}
+function daysUntil(ds){
+  if(!ds)return null;
+  const t=new Date(ds);t.setHours(0,0,0,0);const n=new Date(TODAY);n.setHours(0,0,0,0);
+  return Math.round((t-n)/86400000);
+}
+function getStatus(dl,stages){
+  const isLive=dl.stage>=stages.length-1;
+  if(isLive&&dl.actual&&dl.qa){const diff=Math.round((new Date(dl.actual)-new Date(dl.qa))/86400000);return diff<=0?{cls:'ds-hit',label:'Live — on time'}:{cls:'ds-missed',label:'Live — '+diff+'d late'};}
+  if(isLive)return{cls:'ds-done',label:'Live'};
+  const d=daysUntil(dl.qa);
+  if(d===null)return{cls:'ds-ok',label:'In progress'};
+  if(d<0)return{cls:'ds-overdue',label:Math.abs(d)+'d overdue'};
+  if(d===0)return{cls:'ds-today',label:'Due today'};
+  if(d<=3)return{cls:'ds-soon',label:d+'d to go'};
+  return{cls:'ds-ok',label:d+'d to go'};
+}
+function renderDeadlines(){
+  const ov=deadlines.filter(d=>{const s=d.type==='flow'?FS:CS;const dd=daysUntil(d.qa);return dd!==null&&dd<0&&d.stage<s.length-1}).length;
+  const dt=deadlines.filter(d=>{const s=d.type==='flow'?FS:CS;const dd=daysUntil(d.qa);return dd===0&&d.stage<s.length-1}).length;
+  const lv=deadlines.filter(d=>{const s=d.type==='flow'?FS:CS;return d.stage>=s.length-1}).length;
+  document.getElementById('dl-total').textContent=deadlines.length;
+  document.getElementById('dl-overdue').textContent=ov;
+  document.getElementById('dl-due-today').textContent=dt;
+  document.getElementById('dl-live').textContent=lv;
+  const c=document.getElementById('deadlines-list');
+  if(!deadlines.length){c.innerHTML='<div style="text-align:center;color:var(--text2);font-size:14px;padding:30px"><i class="ti ti-calendar" style="font-size:32px;display:block;margin-bottom:10px;color:var(--border2)"></i>No items tracked yet</div>';return;}
+  c.innerHTML=deadlines.map(dl=>{
+    const stages=dl.type==='flow'?FS:CS,si=getStatus(dl,stages),isLive=dl.stage>=stages.length-1;
+    const prog=Math.round((dl.stage/(stages.length-1))*100);
+    const fc=si.cls==='ds-overdue'||si.cls==='ds-missed'?'#DC2626':si.cls==='ds-done'||si.cls==='ds-hit'?'#16A34A':si.cls==='ds-soon'||si.cls==='ds-today'?'#D97706':'#E6017E';
+    const qd=dl.qa?new Date(dl.qa).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
+    const chips=stages.map((s,i)=>{const done=dl.done.includes(i),cur=dl.stage===i;return'<span class="stage-chip '+(done?'done-stage':cur?'active-stage':'')+'" onclick="setStage('+dl.id+','+i+')" title="Set to: '+s+'">'+s+'</span>'}).join('');
+    const liveRow=isLive?'<div class="live-row"><label><i class="ti ti-calendar-check" style="font-size:13px;vertical-align:-1px;margin-right:3px"></i>Actual go-live:</label><input type="date" value="'+dl.actual+'" onchange="setActual('+dl.id+',this.value)"></div>':'';
+    return'<div class="deadline-card" style="'+(dl.flagged?'border-color:#F0AD00;border-width:2px;':'')+'">'+
+      '<div style="display:flex;align-items:flex-start;gap:10px">'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px">'+
+            '<span style="font-size:14px;font-weight:600;color:var(--text)">'+dl.name+'</span>'+
+            '<span class="type-tag '+(dl.type==='flow'?'tf':'tc')+'">'+dl.type+'</span>'+
+            (dl.market?'<span class="type-tag">'+dl.market+'</span>':'')+
+            '<span class="dl-status '+si.cls+'">'+si.label+'</span>'+
+            (dl.amends>=2?'<span class="amend-warn"><i class="ti ti-alert-triangle" style="font-size:11px;vertical-align:-1px"></i> '+dl.amends+' amend rounds</span>':'')+
+          '</div>'+
+          (qd?'<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><i class="ti ti-calendar" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i>QA deadline: '+qd+'</div>':'')+
+          (dl.notes?'<div style="font-size:12px;color:var(--text2);margin-bottom:3px">'+dl.notes+'</div>':'')+
+          liveRow+
+        '</div>'+
+        '<div style="display:flex;gap:6px;flex-shrink:0">'+
+          '<button onclick="toggleFlag('+dl.id+')" style="background:'+(dl.flagged?'#FEF3CD':'var(--bg2)')+';color:'+(dl.flagged?'#7B5300':'var(--text2)')+';border:1px solid var(--border2);border-radius:var(--radius);padding:6px 9px;cursor:pointer;font-size:14px"><i class="ti ti-flag"></i></button>'+
+          '<button onclick="removeDL('+dl.id+')" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius);padding:6px 9px;cursor:pointer;font-size:14px"><i class="ti ti-trash"></i></button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="dl-progress"><div class="dl-fill" style="width:'+prog+'%;background:'+fc+'"></div></div>'+
+      '<div class="stage-row">'+chips+'</div>'+
+    '</div>';
+  }).join('');
+}
+renderDeadlines();
+</script>
+</body>
+</html>
