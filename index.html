@@ -651,7 +651,7 @@ async function submitReview(type){
   li_int=setInterval(()=>{mi=(mi+1)%LM.length;lm.textContent=LM[mi]},2100);
   ra.scrollIntoView({behavior:'smooth',block:'start'});
   try{
-    const resp=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:SYSTEM_PROMPT,messages:buildMessages(sub)})});
+    const resp=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:SYSTEM_PROMPT,messages:buildMessages(sub)})});
     const data=await resp.json();
     clearInterval(li_int);lw.style.display='none';
     if(data.error){sp.className='status-pill status-warning';sp.textContent='Error';rtxt.textContent='API error: '+data.error.message;btn.disabled=false;return;}
